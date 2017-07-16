@@ -65,9 +65,9 @@ def get_info(content):
 def dump_to_csv(datas):
     output = 'maldiveschina.csv'
     with open(output, 'w') as f:
-        f.write('名字, 地址1, 环礁, 距马累（公里）, 沙屋, 水屋, 餐厅+酒吧, 消费等级, 上岛交通, 链接\n')
-        for island in datas:
-            row = ','.join([island['title'], island['add1'], island['add2'], island['area'],
+        f.write('#, 名字, 地址1, 环礁, 距马累（公里）, 沙屋, 水屋, 餐厅+酒吧, 消费等级, 上岛交通, 链接\n')
+        for i, island in enumerate(datas):
+            row = ','.join([str(i + 1), island['title'], island['add1'], island['add2'], island['area'],
                             island['bed'], island['bath'], island['garage'], island['ptype'],
                             island['tag'], island['link']])
             f.write(row.encode('utf8'))
