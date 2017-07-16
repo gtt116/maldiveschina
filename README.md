@@ -6,7 +6,7 @@
 ```bash
 git clone https://github.com/gtt116/maldiveschina
 cd maldiveschina
-pip install -r requirements.txt
+pip install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/
 
 ./run.sh
 python -mSimpleHTTPServer   # 访问这台机器的8000端口即可
