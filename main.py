@@ -63,13 +63,16 @@ def get_info(content):
 
 
 def dump_to_csv(datas):
-    with open('maldiveschina.csv', 'w') as f:
-        f.write('title, add1, add2, add3, area, beach_villa, water_villa, bars, level, transport, link\n')
+    output = 'maldiveschina.csv'
+    with open(output, 'w') as f:
+        f.write('名字, 地址1, 环礁, 距马累（公里）, 沙屋, 水屋, 餐厅+酒吧, 消费等级, 上岛交通, 链接\n')
         for island in datas:
-            row = ','.join([island['title'], island['add1'], island['add2'], island['add3'], island['area'],
-                            island['bed'], island['bath'], island['garage'], island['ptype'], island['tag'], island['link']])
+            row = ','.join([island['title'], island['add1'], island['add2'], island['area'],
+                            island['bed'], island['bath'], island['garage'], island['ptype'],
+                            island['tag'], island['link']])
             f.write(row.encode('utf8'))
             f.write('\n')
+    print 'written to %s' % output
 
 
 def main():
