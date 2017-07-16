@@ -1,3 +1,4 @@
 requests
+gevent
 beautifulsoup4 
 csvtotable

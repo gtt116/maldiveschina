@@ -2,4 +2,4 @@
 
 python main.py
 
-csvtotable maldiveschina.csv maldiveschina.html
+csvtotable maldiveschina.csv maldiveschina.html -o

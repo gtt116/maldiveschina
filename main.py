@@ -1,21 +1,26 @@
 #-*-coding:utf8-*-
+import re
+
 import requests
+from gevent import pool as gpool
+from gevent import monkey
 from bs4 import BeautifulSoup as Bs
 
+WORKERS = 12
 http = requests.Session()
+ISLANDS = {}
 
 
 def load_html(url):
-    print 'Loading %s' % url
     response = http.get(url)
     return response.content
 
 
-def get_info(content):
-    print "parser it..."
+def get_basic_info(url):
+    print "parser %s .." % url
+    content = load_html(url)
     bs = Bs(content, "html.parser")
 
-    islands = []
     for item in bs.find_all(class_="property-listing-simple"):
         island = {}
         island['title'] = item.find(class_="entry-title").text
@@ -57,25 +62,53 @@ def get_info(content):
                 island[key] = '0'
 
         island['link'] = item.find(class_='btn-default').attrs['href']
-        islands.append(island)
+        ISLANDS[island['title']] = island
 
-    return islands
+
+def get_detail(island):
+    island_url = island['link']
+    body = load_html(island_url)
+    print 'parse detail: %s ..' % island_url
+
+    bs = Bs(body, "html.parser")
+    # Extract text like "197USD/人/往返; 12岁以下儿童半价; 未满2周岁免费"
+    price_tag = bs.find(class_="property-additional-details-list"). \
+            find('dd', string=re.compile(".*USD/.*"))
+    if price_tag:
+        island['price'] = price_tag.text
+    else:
+        island['price'] = '-'
 
 
 def dump_to_csv(datas):
+    """
+    A dict of island information, key is name of island, value is island info.
+    """
     output = 'maldiveschina.csv'
     with open(output, 'w') as f:
-        f.write('#, 名字, 地址1, 环礁, 距马累（公里）, 沙屋, 水屋, 餐厅+酒吧, 消费等级, 上岛交通, 链接\n')
-        for i, island in enumerate(datas):
-            row = ','.join([str(i + 1), island['title'], island['add1'], island['add2'], island['area'],
-                            island['bed'], island['bath'], island['garage'], island['ptype'],
-                            island['tag'], island['link']])
+        f.write('#, 名字, 消费等级, 沙屋, 水屋, 上岛费用, 上岛交通, 岛, 环礁, 距马累（公里）, 餐厅+酒吧, 链接\n')
+        for i, island in enumerate(sorted(datas.values())):
+            row = ','.join([
+                str(i + 1),
+                island['title'],
+                island['ptype'],  # price level
+                island['bed'],   # beach villa
+                island['bath'],  # water villa
+                island['price'],  # transform price
+                island['tag'],   # transform
+                island['add1'],
+                island['add2'],
+                island['area'],  # for from male
+                island['garage'],  # bars
+                island['link']   # href
+            ])
             f.write(row.encode('utf8'))
             f.write('\n')
     print 'written to %s' % output
 
 
 def main():
+    monkey.patch_all()
     urls = [
         'http://www.maldiveschina.com/property-city/northern-atoll',
         'http://www.maldiveschina.com/property-city/southern-atoll',
@@ -83,12 +116,19 @@ def main():
         'http://www.maldiveschina.com/property-city/south-male-atoll',
         'http://www.maldiveschina.com/property-city/ari-atoll',
     ]
-    total_islands = []
-    for url in urls:
-        html = load_html(url)
-        total_islands.extend(get_info(html))
+    pool = gpool.Pool(WORKERS)
 
-    dump_to_csv(total_islands)
+    print 'Get overall island lists.'
+    for url in urls:
+        pool.spawn(get_basic_info, url)
+    pool.join()
+
+    print 'Get islands detail...'
+    for island in ISLANDS.values():
+        pool.spawn(get_detail, island)
+    pool.join()
+
+    dump_to_csv(ISLANDS)
 
 
 if __name__ == '__main__':
