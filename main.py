@@ -68,7 +68,7 @@ def dump_to_csv(datas):
         for island in datas:
             row = ','.join([island['title'], island['add1'], island['add2'], island['add3'], island['area'],
                             island['bed'], island['bath'], island['garage'], island['ptype'], island['tag'], island['link']])
-            f.write(row.encode('gbk'))
+            f.write(row.encode('utf8'))
             f.write('\n')
 
 
